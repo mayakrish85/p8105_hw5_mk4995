@@ -154,13 +154,32 @@ final_df |>
   )
 ```
 
-As the size of the mean increases, the power of the test increases. 
+As the size of the mean increases, the power of the test increases. This implies that as the effect size increases, so does the probability of correctly rejecting the null hypothesis (mu = 0). 
+
+**Make a plot showing the average estimate of mu-hats for all tests, as well as for only rejected tests, on the y axis and the true value of mu on the x axis.**
 
 ```{r}
 final_df |> 
   group_by(mu) |> 
   summarize(
-    avg_estimate = mean(mu_hats)
+    avg_estimate = mean(mu_hats),
+    avg_rejected_estimate = mean(mu_hats[p_values < alpha])
+  ) |> 
+  ggplot(aes(x = mu)) +
+  geom_line(aes(y = avg_estimate, color = "All Samples")) +
+  geom_point(aes(y = avg_estimate, color = "All Samples")) +
+  geom_line(aes(y = avg_rejected_estimate, color = "Null Rejected")) +
+  geom_point(aes(y = avg_rejected_estimate, color = "Null Rejected")) +
+  labs(
+    title = "Average Estimate of Mu-hat vs. True Mu",
+    x = "True mean",
+    y = "Average mean estimate",
+    color = "Sample Group"
+  ) +
+  scale_color_manual(
+    values = c("All Samples" = "blue", "Null Rejected" = "purple")
   )
 ```
+
+Across all samples, the average estimate is approximately equal to the true mean. The estimate for the sample population where the null was rejected is less likely to be equal to the true mean, which makes sense, because it represents the population where the mean estimate was significantly different from the true mean. Overall, though, as the effect size increases, the average estimate across both sample groups become approximately equal. 
 
