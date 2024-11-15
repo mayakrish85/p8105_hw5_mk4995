@@ -230,7 +230,8 @@ homicide_data_summarized =
     total_unsolved_homicides = sum(unsolved)
   )
 
-homicide_data_summarized
+homicide_data_summarized |> 
+  knitr::kable()
 ```
 
 **For the city of Baltimore, MD, use the `prop.test` function to estimate the proportion of homicides that are unsolved.**
@@ -248,22 +249,44 @@ prop_test_baltimore = prop.test(total_unsolved_baltimore, total_baltimore)
 prop_test_baltimore |> 
   broom::tidy() |> 
   select(estimate, conf.low, conf.high) |> 
-  knitr::kable()
+  knitr::kable(digits=3)
 ```
 
 **Now run prop.test for each of the cities in your dataset.**
 
 ```{r}
-homicide_data_summarized |> 
-  nest(data = c(total_homicides, total_unsolved_homicides)) |> 
+prop_homicides_city = 
+  homicide_data_summarized |> 
   mutate(
-    prop_test = map(data, ~ prop.test(.x$total_unsolved_homicides, .x$total_homicides)),
-    # use map2 instead
+    prop_test = map2(total_unsolved_homicides, total_homicides, ~ prop.test(.x, .y)),
     results = map(prop_test, broom::tidy)
   ) |> 
   unnest(results) |> 
-  select(city_state, estimate, conf.low, conf.high) |> 
-  knitr::kable()
+  select(city_state, estimate, conf.low, conf.high)
+
+prop_homicides_city |> 
+  knitr::kable(digits=3)
+```
+
+
+**Create a plot that shows the estimates and CIs for each city.**
+
+```{r}
+prop_homicides_city_arranged =
+  prop_homicides_city |> 
+  arrange(desc(estimate)) |> 
+  mutate(city_state = factor(city_state, levels = city_state))
+  
+prop_homicides_city_arranged |>
+  ggplot(aes(x = city_state, y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
+  labs(
+    title = "Estimated Proportion of Unsolved Homicides by City",
+    x = "City, State",
+    y = "Estimated Proportion of Unsolved Homicides"
+  ) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
 
 
